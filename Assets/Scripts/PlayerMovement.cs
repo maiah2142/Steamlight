@@ -7,15 +7,15 @@ public class PlayerMovement : MonoBehaviour {
 	private const bool DEBUG = true;
 
 	//defines for force
-	private float pitchForce = 240.0f;
-	private float rollForce = 240.0f;
-	private float yawForce = 120.0f;
-	private float forwardForce = 400.0f;
-	private float transForce = 200.0f;
+	private const float pitchForce = 240.0f;
+	private const float rollForce = 240.0f;
+	private const float yawForce = 120.0f;
+	private const float forwardForce = 400.0f;
+	private const float transForce = 200.0f;
 
-	private float pitchClamp = 3.0f;
-	private float rollClamp = 3.0f;
-	private float yawClamp = 1.5f;
+	private const float pitchClamp = 3.0f;
+	private const float rollClamp = 3.0f;
+	private const float yawClamp = 1.5f;
 	//Define
 	private float pitchAxis, rollAxis, yawAxis, surgeAxis, swayAxis, heaveAxis;
 
@@ -26,6 +26,9 @@ public class PlayerMovement : MonoBehaviour {
 	private void Start(){
 		m_rb = GetComponent<Rigidbody>();
 		m_trans = GetComponent<Transform>();
+
+		keySAS = true;
+		keyABS = true;
 	}
 
 	// Update is called once per frame
@@ -124,8 +127,7 @@ public class PlayerMovement : MonoBehaviour {
 				Vector3.up * DeltaForce(transForce) * heaveAxis);
 		}
 		//if ABS mode is off
-		else
-		{
+		else{
 			//no automatic counter thrust
 			m_rb.AddRelativeForce(Vector3.forward * DeltaForce(forwardForce) * surgeAxis, ForceMode.Force);
 			m_rb.AddRelativeForce(Vector3.right * DeltaForce(transForce) * swayAxis, ForceMode.Force);
@@ -173,9 +175,17 @@ public class PlayerMovement : MonoBehaviour {
 
 	// Collection of debug logs
 	private void DisplayDebug(){
+		
 		if (DEBUG) Debug.Log("Speed = " + m_rb.velocity.magnitude + " m/s");
-		if (DEBUG) Debug.Log("SAS = " + keySAS + "\nrelativeTranslationalVelocity = " + relativeTranslationalVelocity);
-		if (DEBUG) Debug.Log("ABS = " + keyABS + "\nrelativeAngularVelocity = " + relativeAngularVelocity);
+		if (DEBUG) Debug.Log("ABS = " + keyABS + "\nrelativeTranslationalVelocity = " + relativeTranslationalVelocity);
+		if (DEBUG) Debug.Log("SAS = " + keySAS + "\nrelativeAngularVelocity = " + relativeAngularVelocity);
+
+		float hAngle = Mathf.Atan2(relativeTranslationalVelocity.x, relativeTranslationalVelocity.z) * Mathf.Rad2Deg;
+		float hPy = Mathf.Sqrt(Mathf.Pow(relativeTranslationalVelocity.x, 2) + Mathf.Pow(relativeTranslationalVelocity.z, 2));
+		float vAngle = Mathf.Atan2(relativeTranslationalVelocity.y, hPy) * Mathf.Rad2Deg;
+
+		if (DEBUG) Debug.Log("hAngle = " + hAngle);
+		if (DEBUG) Debug.Log("vAngle = " + vAngle);
+
 	}
 }
- 
