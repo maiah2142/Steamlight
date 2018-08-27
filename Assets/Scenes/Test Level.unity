@@ -479,6 +479,7 @@ GameObject:
   - component: {fileID: 1794829370}
   - component: {fileID: 1794829372}
   - component: {fileID: 1794829371}
+  - component: {fileID: 1794829373}
   m_Layer: 0
   m_Name: FighterMediumPrefab
   m_TagString: Untagged
@@ -514,8 +515,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5363d723903bedf49a1699c8af5b6269, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerRB: {fileID: 1794829372}
-  playerTrans: {fileID: 1794829370}
 --- !u!54 &1794829372
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -531,6 +530,17 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1794829373
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1794829369}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10c39fe21b09dae4f96a928e5d6a7e95, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2131290554
 GameObject:
   m_ObjectHideFlags: 0
