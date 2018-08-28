@@ -21,9 +21,8 @@ public class PlayerMovement : MonoBehaviour {
 	private const float rollClamp = 3.0f;
 	private const float yawClamp = 1.5f;
 
-	//Define
-	private float pitchAxis, rollAxis, yawAxis, surgeAxis, swayAxis,
-		heaveAxis;
+	//Define input axes
+	private float pitchAxis, rollAxis, yawAxis, surgeAxis, swayAxis, heaveAxis;
 
 	private bool keySAS, keyABS;
 
@@ -71,42 +70,57 @@ public class PlayerMovement : MonoBehaviour {
 	private void ShipRotation(){
 		//if SAS mode is on
 		if (keySAS){
-			//use SAS "smart" counterthrust
-			/*
-				Vector3 temp = Vector3.left * pitchForce
-					* pitchAxis;
-				Vector3.up * yawForce * yawAxis);
-			*/
-			//pitch
-			SAS(pitchAxis,
-				Vector3.right * CounterForce(0.0f,
-					relAngVel.x, pitchForce),
-				Vector3.left * SASClamp(pitchClamp,
-					relAngVel.x, pitchForce) * pitchAxis);
-			//roll
-			SAS(rollAxis,
-				Vector3.forward * CounterForce(0.0f, relAngVel.z, rollForce),
-				Vector3.back * SASClamp(rollClamp, relAngVel.z, rollForce) * rollAxis);
-			//yaw
-			SAS(yawAxis,
-				Vector3.up * CounterForce(0.0f, relAngVel.y, yawForce),
-				Vector3.up * SASClamp(yawClamp, relAngVel.y, yawForce) * yawAxis);
+			
+			SAS(
+				pitchAxis,
+				Vector3.right,
+				pitchForce,
+				0,
+				pitchClamp
+			);
+
+			SAS(
+				yawAxis,
+				Vector3.up,
+				yawForce,
+				1,
+				yawClamp
+			);
+			
+			SAS(
+				rollAxis,
+				Vector3.forward,
+				rollForce,
+				2,
+				rollClamp
+			);
 		//if SAS mode is off
 		} else {
 			//no automatic counter thrust
-			rb.AddRelativeTorque(Vector3.left * pitchForce * pitchAxis, ForceMode.Force);
-			rb.AddRelativeTorque(Vector3.back * rollForce * rollAxis, ForceMode.Force);
+			rb.AddRelativeTorque(Vector3.right * pitchForce * pitchAxis, ForceMode.Force);
+			rb.AddRelativeTorque(Vector3.forward * rollForce * rollAxis, ForceMode.Force);
 			rb.AddRelativeTorque(Vector3.up * yawForce * yawAxis, ForceMode.Force);
 		}
 	}
 	// Stability Assist System slowdown
-	private void SAS(float axis, Vector3 retrograde, Vector3 prograde){
-		//if no input detected
-		if (axis == 0)
-			rb.AddRelativeTorque(retrograde, ForceMode.Force);
-		//if input detected
-		else
-			rb.AddRelativeTorque(prograde, ForceMode.Force);
+	private void SAS(float axis, Vector3 dirVector, float force, int relIndex, float clamp){
+		if (axis == 0){
+			//Debug.Log(relAngVel[relIndex]);
+			if (relAngVel[relIndex] < force * Time.deltaTime &&
+			    relAngVel[relIndex] > force * Time.deltaTime * -1){	
+				Vector3 vel = relAngVel;
+				vel[relIndex] = 0.0f;
+				Debug.Log("force limit = " + force * Time.deltaTime);
+				Debug.Log("vel = " + vel);
+				rb.angularVelocity = transform.TransformDirection(vel);
+			} else {
+				rb.AddRelativeTorque(dirVector * CounterForce(0.0f, relAngVel[relIndex], force),
+					ForceMode.Force);
+			}
+		} else {
+			rb.AddRelativeTorque(dirVector * SASClamp(Mathf.Abs(clamp * axis), relAngVel[relIndex], force)
+				* axis, ForceMode.Force);
+		}
 	}
 	private float SASClamp(float clamp, float currVel, float force){
 		if (-clamp < currVel && currVel < clamp)
@@ -114,29 +128,21 @@ public class PlayerMovement : MonoBehaviour {
 		return 0.0f;
 	}
 
-	private void ShipRCS(float axis, Vector3 dirVector, float posForce,
-			float negForce, float relativeDir){
+
+	/*
+	private void ShipRCS(float axis, Vector3 dirVector, float force, float relativeDir){
 		//if axis is positive
 		if (axis > 0.0f){
-			rb.AddRelativeTorque(dirVector * posForce * axis,
-				ForceMode.Force);
+			rb.AddRelativeTorque(dirVector * force * axis, ForceMode.Force);
 		//if axis is negative
 		} else if (axis < 0.0f){
-			rb.AddRelativeForce(dirVector * negForce * axis,
-				ForceMode.Force);
+			rb.AddRelativeForce(dirVector * force * axis, ForceMode.Force);
 		}
 	}
+	*/
 
 	// Translate whole ship with the ShipThrust function
 	private void ShipTranslation(){
-		//forward and back
-		ShipThrust(
-			surgeAxis, //z axis
-			Vector3.forward, //direction vector
-			forwardForce, //positive force
-			backwardForce, //negative force
-			2 //index for z
-		);
 		//right and left
 		ShipThrust(
 			swayAxis, //x axis
@@ -153,36 +159,37 @@ public class PlayerMovement : MonoBehaviour {
 			transDownForce, //negative force
 			1 //index for y
 		);
+		//forward and back
+		ShipThrust(
+			surgeAxis, //z axis
+			Vector3.forward, //direction vector
+			forwardForce, //positive force
+			backwardForce, //negative force
+			2 //index for z
+		);
 	}
 	// Ship thrust for individual axis
-	private void ShipThrust(float axis, Vector3 dirVector, float posForce,
-			float negForce, int relIndex){
+	private void ShipThrust(float axis, Vector3 dirVector, float posForce, float negForce, int relIndex){
 		//if axis is positive
 		if (axis > 0.0f){
-			rb.AddRelativeForce(dirVector * posForce * axis,
-				ForceMode.Force);
+			rb.AddRelativeForce(dirVector * posForce * axis, ForceMode.Force);
 		//if axis is negative
 		} else if (axis < 0.0f){
-			rb.AddRelativeForce(dirVector * negForce * axis,
-				ForceMode.Force);
+			rb.AddRelativeForce(dirVector * negForce * axis, ForceMode.Force);
 		//if no input and ABS system is on
 		} else if (keyABS){
 			//Provide artificial drag to the ship when a thrust 
 			//vector is not used
-			if (relTranVel[relIndex] < posForce / rb.mass 
-					* Time.deltaTime &&
-				relTranVel[relIndex] > negForce / rb.mass 
-					* Time.deltaTime){	
+			if (relTranVel[relIndex] < posForce / rb.mass  * Time.deltaTime &&
+			    relTranVel[relIndex] > negForce / rb.mass * Time.deltaTime * -1){	
 				Vector3 vel = relTranVel;
 				vel[relIndex] = 0.0f;
 				rb.velocity = transform.TransformDirection(vel);
 			}
 			if (relTranVel[relIndex] > 0){
-				rb.AddRelativeForce(dirVector * negForce * -1,
-					ForceMode.Force);
+				rb.AddRelativeForce(dirVector * negForce * -1, ForceMode.Force);
 			} else if (relTranVel[relIndex] < 0){
-				rb.AddRelativeForce(dirVector * posForce,
-					ForceMode.Force);
+				rb.AddRelativeForce(dirVector * posForce, ForceMode.Force);
 			}
 		}
 	}
@@ -201,6 +208,7 @@ public class PlayerMovement : MonoBehaviour {
 	
 	// Collection of debug logs
 	private void DisplayDebug(){
+		/*
 		Debug.Log("Speed = " + rb.velocity.magnitude + " m/s");
 		Debug.Log("ABS = " + keyABS);
 		Debug.Log("relTranVel = " + relTranVel);
@@ -213,5 +221,6 @@ public class PlayerMovement : MonoBehaviour {
 
 		Debug.Log("hAngle = " + hAngle);
 		Debug.Log("vAngle = " + vAngle);
+		*/
 	}
 }
