@@ -107,15 +107,15 @@ public class PlayerMovement : MonoBehaviour {
 		if (axis == 0){
 			//Debug.Log(relAngVel[relIndex]);
 			if (relAngVel[relIndex] < force * Time.deltaTime &&
-			    relAngVel[relIndex] > force * Time.deltaTime * -1){	
+			    relAngVel[relIndex] > force * Time.deltaTime * -1){
 				Vector3 vel = relAngVel;
 				vel[relIndex] = 0.0f;
-				Debug.Log("force limit = " + force * Time.deltaTime);
-				Debug.Log("vel = " + vel);
 				rb.angularVelocity = transform.TransformDirection(vel);
-			} else {
-				rb.AddRelativeTorque(dirVector * CounterForce(0.0f, relAngVel[relIndex], force),
-					ForceMode.Force);
+			}
+			if (relAngVel[relIndex] > 0){
+				rb.AddRelativeTorque(dirVector * force * -1, ForceMode.Force);
+			} else if (relAngVel[relIndex] < 0){
+				rb.AddRelativeTorque(dirVector * force, ForceMode.Force);
 			}
 		} else {
 			rb.AddRelativeTorque(dirVector * SASClamp(Mathf.Abs(clamp * axis), relAngVel[relIndex], force)
@@ -192,18 +192,6 @@ public class PlayerMovement : MonoBehaviour {
 				rb.AddRelativeForce(dirVector * posForce, ForceMode.Force);
 			}
 		}
-	}
-
-	// Helper function for calculating counter force 
-	private float CounterForce(float target, float vel, float force){
-		//if velocity is negative
-		if (vel < target)
-			return force; //positive value
-		//if velocity is positve
-		else if (vel > target)
-			return -force; //negative value
-		//if velocity is 0, don't do anything
-		return 0.0f;
 	}
 	
 	// Collection of debug logs
