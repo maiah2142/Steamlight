@@ -63,14 +63,14 @@ public class PlayerMovement : MonoBehaviour {
 		ShipRotation();
 		ShipTranslation();
 
-		DisplayDebug();
+		if (DEBUG) DisplayDebug();
 	}
 
 	// Rotates ship based on SAS mode
 	private void ShipRotation(){
 		//if SAS mode is on
 		if (keySAS){
-			
+			//pitch
 			SAS(
 				pitchAxis,
 				Vector3.right,
@@ -78,7 +78,7 @@ public class PlayerMovement : MonoBehaviour {
 				0,
 				pitchClamp
 			);
-
+			//yaw
 			SAS(
 				yawAxis,
 				Vector3.up,
@@ -86,7 +86,7 @@ public class PlayerMovement : MonoBehaviour {
 				1,
 				yawClamp
 			);
-			
+			//roll
 			SAS(
 				rollAxis,
 				Vector3.forward,
@@ -94,6 +94,7 @@ public class PlayerMovement : MonoBehaviour {
 				2,
 				rollClamp
 			);
+
 		//if SAS mode is off
 		} else {
 			//no automatic counter thrust
@@ -102,32 +103,44 @@ public class PlayerMovement : MonoBehaviour {
 			rb.AddRelativeTorque(Vector3.up * yawForce * yawAxis, ForceMode.Force);
 		}
 	}
-	// Stability Assist System slowdown
-	private void SAS(float axis, Vector3 dirVector, float force, int relIndex, float clamp){
+	// Stability Assist System
+	private void SAS(float axis, Vector3 dirVector, float force, int relIndex, float maxClamp){
+		//if no input
 		if (axis == 0){
-			//Debug.Log(relAngVel[relIndex]);
+			//if current velocity is within the positive and negative force
 			if (relAngVel[relIndex] < force * Time.deltaTime &&
 			    relAngVel[relIndex] > force * Time.deltaTime * -1){
+				//set the velocity of current axis to 0
 				Vector3 vel = relAngVel;
 				vel[relIndex] = 0.0f;
 				rb.angularVelocity = transform.TransformDirection(vel);
 			}
+			//if the current velocity of the axis is positive
 			if (relAngVel[relIndex] > 0){
+				//apply negative force to the rigid body
 				rb.AddRelativeTorque(dirVector * force * -1, ForceMode.Force);
+			//if the current velocity of the axis is negative
 			} else if (relAngVel[relIndex] < 0){
+				//apply positive force to the rigid body
 				rb.AddRelativeTorque(dirVector * force, ForceMode.Force);
 			}
+		//if there is user input on a particular axis
 		} else {
-			rb.AddRelativeTorque(dirVector * SASClamp(Mathf.Abs(clamp * axis), relAngVel[relIndex], force)
-				* axis, ForceMode.Force);
+			//apply force to rigid body using the clamp method
+			//limits the turn rate to a specified velocity
+
+			float clamp = maxClamp * axis;
+			//if the current velocity of the axis is positive
+			if (relAngVel[relIndex] > clamp){
+				//apply negative force to the rigid body
+				rb.AddRelativeTorque(dirVector * force * -1, ForceMode.Force);
+			//if the current velocity of the axis is negative
+			} else if (relAngVel[relIndex] < clamp){
+				//apply positive force to the rigid body
+				rb.AddRelativeTorque(dirVector * force, ForceMode.Force);
+			}
 		}
 	}
-	private float SASClamp(float clamp, float currVel, float force){
-		if (-clamp < currVel && currVel < clamp)
-			return force;
-		return 0.0f;
-	}
-
 
 	/*
 	private void ShipRCS(float axis, Vector3 dirVector, float force, float relativeDir){
@@ -178,17 +191,21 @@ public class PlayerMovement : MonoBehaviour {
 			rb.AddRelativeForce(dirVector * negForce * axis, ForceMode.Force);
 		//if no input and ABS system is on
 		} else if (keyABS){
-			//Provide artificial drag to the ship when a thrust 
-			//vector is not used
+			//if current velocity is within the positive and negative force
 			if (relTranVel[relIndex] < posForce / rb.mass  * Time.deltaTime &&
-			    relTranVel[relIndex] > negForce / rb.mass * Time.deltaTime * -1){	
+			    relTranVel[relIndex] > negForce / rb.mass * Time.deltaTime * -1){
+				//set the velocity of current axis to 0
 				Vector3 vel = relTranVel;
 				vel[relIndex] = 0.0f;
 				rb.velocity = transform.TransformDirection(vel);
 			}
+			//if the current velocity of the axis is positive
 			if (relTranVel[relIndex] > 0){
+				//apply negative force to the rigid body
 				rb.AddRelativeForce(dirVector * negForce * -1, ForceMode.Force);
+			//if the current velocity of the axis is negative
 			} else if (relTranVel[relIndex] < 0){
+				//apply positive force to the rigid body
 				rb.AddRelativeForce(dirVector * posForce, ForceMode.Force);
 			}
 		}
@@ -196,7 +213,6 @@ public class PlayerMovement : MonoBehaviour {
 	
 	// Collection of debug logs
 	private void DisplayDebug(){
-		/*
 		Debug.Log("Speed = " + rb.velocity.magnitude + " m/s");
 		Debug.Log("ABS = " + keyABS);
 		Debug.Log("relTranVel = " + relTranVel);
@@ -209,6 +225,5 @@ public class PlayerMovement : MonoBehaviour {
 
 		Debug.Log("hAngle = " + hAngle);
 		Debug.Log("vAngle = " + vAngle);
-		*/
 	}
 }
