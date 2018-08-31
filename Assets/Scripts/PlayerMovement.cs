@@ -57,8 +57,8 @@ public class PlayerMovement : MonoBehaviour {
 	// Update game at fixed intervals
 	private void FixedUpdate(){
 		//update relative rotation and translation velocities
-		relAngVel = trans.InverseTransformDirection(rb.angularVelocity);
-		relTranVel = trans.InverseTransformDirection(rb.velocity);
+		relAngVel = transform.InverseTransformDirection(rb.angularVelocity);
+		relTranVel = transform.InverseTransformDirection(rb.velocity);
 
 		ShipRotation();
 		ShipTranslation();
@@ -94,7 +94,6 @@ public class PlayerMovement : MonoBehaviour {
 				2,
 				rollClamp
 			);
-
 		//if SAS mode is off
 		} else {
 			//no automatic counter thrust
@@ -113,6 +112,7 @@ public class PlayerMovement : MonoBehaviour {
 				//set the velocity of current axis to 0
 				Vector3 vel = relAngVel;
 				vel[relIndex] = 0.0f;
+				relAngVel = vel;
 				rb.angularVelocity = transform.TransformDirection(vel);
 			}
 			//if the current velocity of the axis is positive
@@ -192,21 +192,24 @@ public class PlayerMovement : MonoBehaviour {
 		//if no input and ABS system is on
 		} else if (keyABS){
 			//if current velocity is within the positive and negative force
-			if (relTranVel[relIndex] < posForce / rb.mass  * Time.deltaTime &&
+			if (relTranVel[relIndex] < posForce / rb.mass * Time.deltaTime &&
 			    relTranVel[relIndex] > negForce / rb.mass * Time.deltaTime * -1){
 				//set the velocity of current axis to 0
 				Vector3 vel = relTranVel;
 				vel[relIndex] = 0.0f;
+				relTranVel = vel;
 				rb.velocity = transform.TransformDirection(vel);
 			}
-			//if the current velocity of the axis is positive
-			if (relTranVel[relIndex] > 0){
-				//apply negative force to the rigid body
-				rb.AddRelativeForce(dirVector * negForce * -1, ForceMode.Force);
-			//if the current velocity of the axis is negative
-			} else if (relTranVel[relIndex] < 0){
-				//apply positive force to the rigid body
-				rb.AddRelativeForce(dirVector * posForce, ForceMode.Force);
+			if(relIndex != 2){
+				//if the current velocity of the axis is positive
+				if (relTranVel[relIndex] > 0){
+					//apply negative force to the rigid body
+					rb.AddRelativeForce(dirVector * negForce * -1, ForceMode.Force);
+				//if the current velocity of the axis is negative
+				} else if (relTranVel[relIndex] < 0){
+					//apply positive force to the rigid body
+					rb.AddRelativeForce(dirVector * posForce, ForceMode.Force);
+				}
 			}
 		}
 	}
@@ -222,8 +225,5 @@ public class PlayerMovement : MonoBehaviour {
 		float hAngle = Mathf.Atan2(relTranVel.x, relTranVel.z) * Mathf.Rad2Deg;
 		float hPy = Mathf.Sqrt(Mathf.Pow(relTranVel.x, 2) + Mathf.Pow(relTranVel.z, 2));
 		float vAngle = Mathf.Atan2(relTranVel.y, hPy) * Mathf.Rad2Deg;
-
-		Debug.Log("hAngle = " + hAngle);
-		Debug.Log("vAngle = " + vAngle);
 	}
 }
