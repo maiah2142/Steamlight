@@ -1,15 +1,17 @@
 ﻿using UnityEngine;
+using System;
 
 public class PlayerMovement : MonoBehaviour {
 	private Rigidbody rb;
 	private Transform trans;
 
-	private const bool DEBUG = true;
+	private const bool DEBUG = true;	
 
 	//defines for force
-	private const float pitchForce = 6.0f;
-	private const float rollForce = 6.0f;
-	private const float yawForce = 3.0f;
+	private const float PI = (float)Math.PI;
+	private const float pitchForce = 2*PI;
+	private const float rollForce = 2*PI;
+	private const float yawForce = PI;
 	private const float forwardForce = 8.0f;
 	private const float backwardForce = 4.0f;
 	private const float transUpForce = 6.0f;
@@ -17,9 +19,9 @@ public class PlayerMovement : MonoBehaviour {
 	private const float transLeftForce = 4.0f;
 	private const float transRightForce = 4.0f;
 
-	private const float pitchClamp = 3.0f;
-	private const float rollClamp = 3.0f;
-	private const float yawClamp = 1.5f;
+	private const float pitchClamp = PI;
+	private const float rollClamp = PI;
+	private const float yawClamp = PI/2;
 
 	//Define input axes
 	private float pitchAxis, rollAxis, yawAxis, surgeAxis, swayAxis, heaveAxis;
@@ -72,27 +74,27 @@ public class PlayerMovement : MonoBehaviour {
 		if (keySAS){
 			//pitch
 			SAS(
-				pitchAxis,
-				Vector3.right,
-				pitchForce,
-				0,
-				pitchClamp
+				pitchAxis, //x axis
+				Vector3.right, //direction vector
+				pitchForce, //force
+				0, //index for x
+				pitchClamp //max force for SAS
 			);
 			//yaw
 			SAS(
-				yawAxis,
-				Vector3.up,
-				yawForce,
-				1,
-				yawClamp
+				yawAxis, //y axis
+				Vector3.up, //direction vector
+				yawForce, //force
+				1, //index for y
+				yawClamp //max force for SAS
 			);
 			//roll
 			SAS(
-				rollAxis,
-				Vector3.forward,
-				rollForce,
-				2,
-				rollClamp
+				rollAxis, //z axis
+				Vector3.forward, //direction vector
+				rollForce, //force
+				2, //index for z
+				rollClamp //max force for SAS
 			);
 		//if SAS mode is off
 		} else {
@@ -128,8 +130,16 @@ public class PlayerMovement : MonoBehaviour {
 		} else {
 			//apply force to rigid body using the clamp method
 			//limits the turn rate to a specified velocity
-
 			float clamp = maxClamp * axis;
+			//if current velocity is within the positive and negative force
+			if (relAngVel[relIndex] < clamp + (force * Time.deltaTime) &&
+			    relAngVel[relIndex] > clamp - (force * Time.deltaTime)){
+				//set the relative velocity of current axis to 0
+				Vector3 vel = relAngVel;
+				vel[relIndex] = clamp;
+				relAngVel = vel;
+				rb.angularVelocity = transform.TransformDirection(vel);
+			}
 			//if the current velocity of the axis is positive
 			if (relAngVel[relIndex] > clamp){
 				//apply negative force to the rigid body
@@ -194,22 +204,22 @@ public class PlayerMovement : MonoBehaviour {
 			//if current velocity is within the positive and negative force
 			if (relTranVel[relIndex] < posForce / rb.mass * Time.deltaTime &&
 			    relTranVel[relIndex] > negForce / rb.mass * Time.deltaTime * -1){
-				//set the velocity of current axis to 0
+				//set the relative velocity of current axis to 0
 				Vector3 vel = relTranVel;
 				vel[relIndex] = 0.0f;
 				relTranVel = vel;
 				rb.velocity = transform.TransformDirection(vel);
 			}
-			if(relIndex != 2){
-				//if the current velocity of the axis is positive
-				if (relTranVel[relIndex] > 0){
+			//if the current relative velocity of the axis is positive
+			if (relTranVel[relIndex] > 0){
+				//do not affect the forward force
+				if(relIndex != 2)
 					//apply negative force to the rigid body
 					rb.AddRelativeForce(dirVector * negForce * -1, ForceMode.Force);
-				//if the current velocity of the axis is negative
-				} else if (relTranVel[relIndex] < 0){
-					//apply positive force to the rigid body
-					rb.AddRelativeForce(dirVector * posForce, ForceMode.Force);
-				}
+			//if the current relative velocity of the axis is negative
+			} else if (relTranVel[relIndex] < 0){
+				//apply positive force to the rigid body
+				rb.AddRelativeForce(dirVector * posForce, ForceMode.Force);
 			}
 		}
 	}
