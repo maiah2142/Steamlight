@@ -4,14 +4,16 @@ using System;
 public class PlayerMovement : MonoBehaviour {
 	private Rigidbody rb;
 	private Transform trans;
+	ParticleSystem[] pitchUpRCS;
+	ParticleSystem[] pitchDownRCS;
 
 	private const bool DEBUG = true;	
 
 	//defines for force
 	private const float PI = (float)Math.PI;
-	private const float pitchForce = 2*PI;
-	private const float rollForce = 2*PI;
-	private const float yawForce = PI;
+	private const float pitchForce = 3*PI/2;
+	private const float rollForce = 3*PI/2;
+	private const float yawForce = PI/2;
 	private const float forwardForce = 8.0f;
 	private const float backwardForce = 4.0f;
 	private const float transUpForce = 6.0f;
@@ -19,9 +21,9 @@ public class PlayerMovement : MonoBehaviour {
 	private const float transLeftForce = 4.0f;
 	private const float transRightForce = 4.0f;
 
-	private const float pitchClamp = PI;
-	private const float rollClamp = PI;
-	private const float yawClamp = PI/2;
+	private const float pitchClamp = pitchForce/2;
+	private const float rollClamp = rollForce/2;
+	private const float yawClamp = yawForce/2;
 
 	//Define input axes
 	private float pitchAxis, rollAxis, yawAxis, surgeAxis, swayAxis, heaveAxis;
@@ -108,47 +110,40 @@ public class PlayerMovement : MonoBehaviour {
 	private void SAS(float axis, Vector3 dirVector, float force, int relIndex, float maxClamp){
 		//if no input
 		if (axis == 0){
-			//if current velocity is within the positive and negative force
-			if (relAngVel[relIndex] < force * Time.deltaTime &&
-			    relAngVel[relIndex] > force * Time.deltaTime * -1){
-				//set the velocity of current axis to 0
-				Vector3 vel = relAngVel;
-				vel[relIndex] = 0.0f;
-				relAngVel = vel;
-				rb.angularVelocity = transform.TransformDirection(vel);
-			}
-			//if the current velocity of the axis is positive
-			if (relAngVel[relIndex] > 0){
-				//apply negative force to the rigid body
-				rb.AddRelativeTorque(dirVector * force * -1, ForceMode.Force);
-			//if the current velocity of the axis is negative
-			} else if (relAngVel[relIndex] < 0){
-				//apply positive force to the rigid body
-				rb.AddRelativeTorque(dirVector * force, ForceMode.Force);
-			}
+			VelLevelOff(force, relIndex, 0.0f);
+			VelMatch(dirVector, force, relIndex, 0.0f);
 		//if there is user input on a particular axis
 		} else {
 			//apply force to rigid body using the clamp method
 			//limits the turn rate to a specified velocity
 			float clamp = maxClamp * axis;
-			//if current velocity is within the positive and negative force
-			if (relAngVel[relIndex] < clamp + (force * Time.deltaTime) &&
-			    relAngVel[relIndex] > clamp - (force * Time.deltaTime)){
-				//set the relative velocity of current axis to 0
-				Vector3 vel = relAngVel;
-				vel[relIndex] = clamp;
-				relAngVel = vel;
-				rb.angularVelocity = transform.TransformDirection(vel);
-			}
-			//if the current velocity of the axis is positive
-			if (relAngVel[relIndex] > clamp){
-				//apply negative force to the rigid body
-				rb.AddRelativeTorque(dirVector * force * -1, ForceMode.Force);
-			//if the current velocity of the axis is negative
-			} else if (relAngVel[relIndex] < clamp){
-				//apply positive force to the rigid body
-				rb.AddRelativeTorque(dirVector * force, ForceMode.Force);
-			}
+			VelLevelOff(force, relIndex, clamp);
+			VelMatch(dirVector, force, relIndex, clamp);
+		}
+	}
+
+	private void VelLevelOff(float force, int relIndex, float target){
+		//if current velocity is within the positive and negative force
+		//of target
+		if (relAngVel[relIndex] < target + (force * Time.deltaTime) &&
+		    relAngVel[relIndex] > target - (force * Time.deltaTime)){
+			//set local velocity to target
+			Vector3 vel = relAngVel;
+			vel[relIndex] = target;
+			relAngVel = vel;
+			rb.angularVelocity = transform.TransformDirection(vel);
+		}
+	}
+
+	private void VelMatch(Vector3 dirVector, float force, int relIndex, float target){
+		//if the current velocity of the axis is greater than the target
+		if (relAngVel[relIndex] > target){
+			//apply negative force to the rigid body
+			rb.AddRelativeTorque(dirVector * -force, ForceMode.Force);
+		//if the current velocity of the axis is less than the target
+		} else if (relAngVel[relIndex] < target){
+			//apply positive force to the rigid body
+			rb.AddRelativeTorque(dirVector * force, ForceMode.Force);
 		}
 	}
 
