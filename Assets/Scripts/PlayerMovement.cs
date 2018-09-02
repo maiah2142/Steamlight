@@ -220,27 +220,6 @@ public class PlayerMovement : MonoBehaviour {
 			}
 		}
 	}
-
-	private float CalcRawBearing(){
-		return Mathf.Atan2(relTranVel.x, relTranVel.z) * Mathf.Rad2Deg;
-	}
-	private int CalcBearing(){
-		int hAngle = (int)Math.Round(CalcRawBearing(), 0);
-		if (hAngle < 0)
-			hAngle = hAngle + 360;
-		return hAngle;
-	}
-	
-	private float CalcRawMark(){
-		float hPy = Mathf.Sqrt(Mathf.Pow(relTranVel.x, 2) + Mathf.Pow(relTranVel.z, 2));
-		return Mathf.Atan2(relTranVel.y, hPy) * Mathf.Rad2Deg;
-	}
-	private int CalcMark(){
-		int vAngle = (int)Math.Round(CalcRawMark(), 0);
-		if (vAngle < 0)
-			vAngle = vAngle + 360;
-		return vAngle;
-	}
 	
 	// Collection of debug logs
 	private void DisplayDebug(){
@@ -249,7 +228,5 @@ public class PlayerMovement : MonoBehaviour {
 		Debug.Log("relTranVel = " + relTranVel);
 		Debug.Log("SAS = " + keySAS);
 		Debug.Log("relAngVel = " + relAngVel);
-		Debug.Log("Bearing: " + String.Format("{0,3}", CalcBearing()) +
-			  " Carom: " + String.Format("{0,3}", CalcMark()));
 	}
 }
