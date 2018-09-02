@@ -122,6 +122,7 @@ public class PlayerMovement : MonoBehaviour {
 		}
 	}
 
+	// Level off the velocity to a target velocity if it is near enough to target
 	private void VelLevelOff(float force, int relIndex, float target){
 		//if current velocity is within the positive and negative force
 		//of target
@@ -135,6 +136,7 @@ public class PlayerMovement : MonoBehaviour {
 		}
 	}
 
+	// Apply full counter force to rigid body to match a velocity
 	private void VelMatch(Vector3 dirVector, float force, int relIndex, float target){
 		//if the current velocity of the axis is greater than the target
 		if (relAngVel[relIndex] > target){
@@ -161,7 +163,7 @@ public class PlayerMovement : MonoBehaviour {
 
 	// Translate whole ship with the ShipThrust function
 	private void ShipTranslation(){
-		//right and left
+		//starboard and port
 		ShipThrust(
 			swayAxis, //x axis
 			Vector3.right, //direction vector
@@ -169,7 +171,7 @@ public class PlayerMovement : MonoBehaviour {
 			transLeftForce, //negative force
 			0 //index for x
 		);
-		//up and down
+		//overhead and deck
 		ShipThrust(
 			heaveAxis, //y axis
 			Vector3.up, //direction vector
@@ -177,7 +179,7 @@ public class PlayerMovement : MonoBehaviour {
 			transDownForce, //negative force
 			1 //index for y
 		);
-		//forward and back
+		//bow and aft
 		ShipThrust(
 			surgeAxis, //z axis
 			Vector3.forward, //direction vector
@@ -218,6 +220,27 @@ public class PlayerMovement : MonoBehaviour {
 			}
 		}
 	}
+
+	private float CalcRawBearing(){
+		return Mathf.Atan2(relTranVel.x, relTranVel.z) * Mathf.Rad2Deg;
+	}
+	private int CalcBearing(){
+		int hAngle = (int)Math.Round(CalcRawBearing(), 0);
+		if (hAngle < 0)
+			hAngle = hAngle + 360;
+		return hAngle;
+	}
+	
+	private float CalcRawMark(){
+		float hPy = Mathf.Sqrt(Mathf.Pow(relTranVel.x, 2) + Mathf.Pow(relTranVel.z, 2));
+		return Mathf.Atan2(relTranVel.y, hPy) * Mathf.Rad2Deg;
+	}
+	private int CalcMark(){
+		int vAngle = (int)Math.Round(CalcRawMark(), 0);
+		if (vAngle < 0)
+			vAngle = vAngle + 360;
+		return vAngle;
+	}
 	
 	// Collection of debug logs
 	private void DisplayDebug(){
@@ -226,9 +249,7 @@ public class PlayerMovement : MonoBehaviour {
 		Debug.Log("relTranVel = " + relTranVel);
 		Debug.Log("SAS = " + keySAS);
 		Debug.Log("relAngVel = " + relAngVel);
-
-		float hAngle = Mathf.Atan2(relTranVel.x, relTranVel.z) * Mathf.Rad2Deg;
-		float hPy = Mathf.Sqrt(Mathf.Pow(relTranVel.x, 2) + Mathf.Pow(relTranVel.z, 2));
-		float vAngle = Mathf.Atan2(relTranVel.y, hPy) * Mathf.Rad2Deg;
+		Debug.Log("Bearing: " + String.Format("{0,3}", CalcBearing()) +
+			  " Carom: " + String.Format("{0,3}", CalcMark()));
 	}
 }
