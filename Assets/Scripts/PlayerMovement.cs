@@ -61,8 +61,7 @@ public class PlayerMovement : MonoBehaviour {
 	// Update game at fixed intervals
 	private void FixedUpdate(){
 		//update relative rotation and translation velocities
-		relAngVel = transform.InverseTransformDirection(rb.angularVelocity);
-		relTranVel = transform.InverseTransformDirection(rb.velocity);
+		updateRelVel();
 		ShipRotation();
 		ShipTranslation();
 
@@ -170,9 +169,12 @@ public class PlayerMovement : MonoBehaviour {
 			rb.AddRelativeForce(dirVector * negForce * axis, ForceMode.Force);
 		//if no input and ABS system is on
 		} else if (keyABS){
-			VelLevelOff(setVel, ref relTranVel, posForce/rb.mass, negForce/rb.mass, relIndex, 0.0f);
-			VelMatch(rb.AddRelativeForce, relTranVel, dirVector, posForce/rb.mass, negForce/rb.mass,
-				relIndex, 0.0f);
+			//if vel is not forward on relative z axis
+			if (relIndex != 2 || relTranVel[2] < 0){
+				VelLevelOff(setVel, ref relTranVel, posForce/rb.mass, negForce/rb.mass, relIndex, 0.0f);
+				VelMatch(rb.AddRelativeForce, relTranVel, dirVector, posForce/rb.mass, negForce/rb.mass,
+					relIndex, 0.0f);
+			}
 		}
 	}
 	
@@ -203,6 +205,12 @@ public class PlayerMovement : MonoBehaviour {
 			//apply positive force to the rigid body
 			applyForce(dirVector * posForce, ForceMode.Force);
 		}
+	}
+
+	// Update relative velocities of both angular and translation
+	private void updateRelVel(){
+		relAngVel = transform.InverseTransformDirection(rb.angularVelocity);
+		relTranVel = transform.InverseTransformDirection(rb.velocity);
 	}
 
 	// set rb's velocity
