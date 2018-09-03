@@ -63,7 +63,6 @@ public class PlayerMovement : MonoBehaviour {
 		//update relative rotation and translation velocities
 		relAngVel = transform.InverseTransformDirection(rb.angularVelocity);
 		relTranVel = transform.InverseTransformDirection(rb.velocity);
-
 		ShipRotation();
 		ShipTranslation();
 
@@ -110,42 +109,15 @@ public class PlayerMovement : MonoBehaviour {
 	private void SAS(float axis, Vector3 dirVector, float force, int relIndex, float maxClamp){
 		//if no input
 		if (axis == 0){
-			VelLevelOff(force, relIndex, 0.0f);
-			VelMatch(dirVector, force, relIndex, 0.0f);
+			VelLevelOff(setAngVel, ref relAngVel, force, force, relIndex, 0.0f);
+			VelMatch(rb.AddRelativeTorque, relAngVel, dirVector, force, force, relIndex, 0.0f);
 		//if there is user input on a particular axis
 		} else {
 			//apply force to rigid body using the clamp method
 			//limits the turn rate to a specified velocity
 			float clamp = maxClamp * axis;
-			VelLevelOff(force, relIndex, clamp);
-			VelMatch(dirVector, force, relIndex, clamp);
-		}
-	}
-
-	// Level off the velocity to a target velocity if it is near enough to target
-	private void VelLevelOff(float force, int relIndex, float target){
-		//if current velocity is within the positive and negative force
-		//of target
-		if (relAngVel[relIndex] < target + (force * Time.deltaTime) &&
-		    relAngVel[relIndex] > target - (force * Time.deltaTime)){
-			//set local velocity to target
-			Vector3 vel = relAngVel;
-			vel[relIndex] = target;
-			relAngVel = vel;
-			rb.angularVelocity = transform.TransformDirection(vel);
-		}
-	}
-
-	// Apply full counter force to rigid body to match a velocity
-	private void VelMatch(Vector3 dirVector, float force, int relIndex, float target){
-		//if the current velocity of the axis is greater than the target
-		if (relAngVel[relIndex] > target){
-			//apply negative force to the rigid body
-			rb.AddRelativeTorque(dirVector * -force, ForceMode.Force);
-		//if the current velocity of the axis is less than the target
-		} else if (relAngVel[relIndex] < target){
-			//apply positive force to the rigid body
-			rb.AddRelativeTorque(dirVector * force, ForceMode.Force);
+			VelLevelOff(setAngVel, ref relAngVel, force, force, relIndex, clamp);
+			VelMatch(rb.AddRelativeTorque, relAngVel, dirVector, force, force, relIndex, clamp);
 		}
 	}
 
@@ -198,29 +170,51 @@ public class PlayerMovement : MonoBehaviour {
 			rb.AddRelativeForce(dirVector * negForce * axis, ForceMode.Force);
 		//if no input and ABS system is on
 		} else if (keyABS){
-			//if current velocity is within the positive and negative force
-			if (relTranVel[relIndex] < posForce / rb.mass * Time.deltaTime &&
-			    relTranVel[relIndex] > negForce / rb.mass * Time.deltaTime * -1){
-				//set the relative velocity of current axis to 0
-				Vector3 vel = relTranVel;
-				vel[relIndex] = 0.0f;
-				relTranVel = vel;
-				rb.velocity = transform.TransformDirection(vel);
-			}
-			//if the current relative velocity of the axis is positive
-			if (relTranVel[relIndex] > 0){
-				//do not affect the forward force
-				if(relIndex != 2)
-					//apply negative force to the rigid body
-					rb.AddRelativeForce(dirVector * negForce * -1, ForceMode.Force);
-			//if the current relative velocity of the axis is negative
-			} else if (relTranVel[relIndex] < 0){
-				//apply positive force to the rigid body
-				rb.AddRelativeForce(dirVector * posForce, ForceMode.Force);
-			}
+			VelLevelOff(setVel, ref relTranVel, posForce/rb.mass, negForce/rb.mass, relIndex, 0.0f);
+			VelMatch(rb.AddRelativeForce, relTranVel, dirVector, posForce/rb.mass, negForce/rb.mass,
+				relIndex, 0.0f);
 		}
 	}
 	
+	// Level off the velocity to a target velocity if it is near enough to target
+	private void VelLevelOff(Action<Vector3> changeVel, ref Vector3 relVel, float posForce, float negForce,
+			int relIndex, float target){
+		//if current velocity is within the positive and negative force of target
+		if (relVel[relIndex] < target + (negForce * Time.deltaTime) &&
+		    relVel[relIndex] > target - (posForce * Time.deltaTime)){
+			//set local velocity to target
+			Vector3 vel = relVel;
+			vel[relIndex] = target;
+			relVel = vel;
+			//convert local vector to world vector
+			changeVel(transform.TransformDirection(vel));
+		}
+	}
+
+	// Apply full counter force to rigid body to match a velocity
+	private void VelMatch(Action<Vector3, ForceMode> applyForce, Vector3 relVel, Vector3 dirVector,
+			float posForce, float negForce, int relIndex, float target){
+		//if the current velocity of the axis is greater than the target
+		if (relVel[relIndex] > target){
+			//apply negative force to the rigid body
+			applyForce(dirVector * -negForce, ForceMode.Force);
+		//if the current velocity of the axis is less than the target
+		} else if (relVel[relIndex] < target){
+			//apply positive force to the rigid body
+			applyForce(dirVector * posForce, ForceMode.Force);
+		}
+	}
+
+	// set rb's velocity
+	private void setVel(Vector3 tranVel){
+		rb.velocity = tranVel;
+	}
+
+	// set rb's angular velocity
+	private void setAngVel(Vector3 angVel){
+		rb.angularVelocity = angVel;
+	}
+
 	// Collection of debug logs
 	private void DisplayDebug(){
 		Debug.Log("Speed = " + rb.velocity.magnitude + " m/s");
