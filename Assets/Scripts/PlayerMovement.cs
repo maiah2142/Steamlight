@@ -1,13 +1,15 @@
 ﻿using UnityEngine;
 using System;
+using System.Collections.Generic;
 
 public class PlayerMovement : MonoBehaviour {
 	private Rigidbody rb;
 	private Transform trans;
-	ParticleSystem[] pitchUpRCS;
-	ParticleSystem[] pitchDownRCS;
 
-	private const bool DEBUG = true;	
+	List<ParticleSystem> pitchUpRCS = new List<ParticleSystem>();
+	List<ParticleSystem> pitchDownRCS = new List<ParticleSystem>();
+
+	private const bool DEBUG = false;
 
 	//defines for force
 	private const float PI = (float)Math.PI;
@@ -36,6 +38,19 @@ public class PlayerMovement : MonoBehaviour {
 		rb = GetComponent<Rigidbody>();
 		trans = GetComponent<Transform>();
 
+		foreach (ParticleSystem ps in GetComponentsInChildren<ParticleSystem>()) {
+			if (transform.name.StartsWith("PitchUp"))
+				pitchUpRCS.Add(ps);
+			if (transform.name.StartsWith("PitchDown"))
+				pitchDownRCS.Add(ps);	
+		}
+
+		Debug.Log(pitchUpRCS.Count);
+
+
+		foreach (ParticleSystem ps in pitchUpRCS)
+			Debug.Log(ps);
+
 		keySAS = true;
 		keyABS = true;
 	}
@@ -62,6 +77,7 @@ public class PlayerMovement : MonoBehaviour {
 	private void FixedUpdate(){
 		//update relative rotation and translation velocities
 		updateRelVel();
+
 		ShipRotation();
 		ShipTranslation();
 
@@ -108,15 +124,16 @@ public class PlayerMovement : MonoBehaviour {
 	private void SAS(float axis, Vector3 dirVector, float force, int relIndex, float maxClamp){
 		//if no input
 		if (axis == 0){
-			VelLevelOff(setAngVel, ref relAngVel, force, force, relIndex, 0.0f);
+			VelLevelOff(SetAngVel, ref relAngVel, force, force, relIndex, 0.0f);
 			VelMatch(rb.AddRelativeTorque, relAngVel, dirVector, force, force, relIndex, 0.0f);
 		//if there is user input on a particular axis
 		} else {
 			//apply force to rigid body using the clamp method
 			//limits the turn rate to a specified velocity
 			float clamp = maxClamp * axis;
-			VelLevelOff(setAngVel, ref relAngVel, force, force, relIndex, clamp);
+			VelLevelOff(SetAngVel, ref relAngVel, force, force, relIndex, clamp);
 			VelMatch(rb.AddRelativeTorque, relAngVel, dirVector, force, force, relIndex, clamp);
+			ActivateRCS(pitchUpRCS, pitchDownRCS, axis);
 		}
 	}
 
@@ -171,7 +188,7 @@ public class PlayerMovement : MonoBehaviour {
 		} else if (keyABS){
 			//if vel is not forward on relative z axis
 			if (relIndex != 2 || relTranVel[2] < 0){
-				VelLevelOff(setVel, ref relTranVel, posForce/rb.mass, negForce/rb.mass, relIndex, 0.0f);
+				VelLevelOff(SetVel, ref relTranVel, posForce/rb.mass, negForce/rb.mass, relIndex, 0.0f);
 				VelMatch(rb.AddRelativeForce, relTranVel, dirVector, posForce/rb.mass, negForce/rb.mass,
 					relIndex, 0.0f);
 			}
@@ -214,13 +231,21 @@ public class PlayerMovement : MonoBehaviour {
 	}
 
 	// set rb's velocity
-	private void setVel(Vector3 tranVel){
+	private void SetVel(Vector3 tranVel){
 		rb.velocity = tranVel;
 	}
 
 	// set rb's angular velocity
-	private void setAngVel(Vector3 angVel){
+	private void SetAngVel(Vector3 angVel){
 		rb.angularVelocity = angVel;
+	}
+
+	private void ActivateRCS(List<ParticleSystem> posPartSys, List<ParticleSystem> negPartSys,	
+			float axis){
+		foreach (ParticleSystem ps in posPartSys){
+			ParticleSystem.MainModule main = ps.main;
+			main.startLifetime = 0.2f;
+		}
 	}
 
 	// Collection of debug logs

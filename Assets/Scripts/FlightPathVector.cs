@@ -18,8 +18,10 @@ public class FlightPathVector : MonoBehaviour {
 		relTranVel = transform.InverseTransformDirection(rb.velocity);
 
 		//debug output in BSG format
+		/*
 		Debug.Log("Bearing: " + String.Format("{0,3}", CalcBearing()) +
 			  ", Carom: " + String.Format("{0,3}", CalcMark()));
+		*/
 	}
 	
 	// Calculate the closest angle in degrees from ship to current horizontal vector
