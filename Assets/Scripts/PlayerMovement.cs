@@ -9,23 +9,23 @@ public class PlayerMovement : MonoBehaviour {
 	List<ParticleSystem> pitchUpRCS = new List<ParticleSystem>();
 	List<ParticleSystem> pitchDownRCS = new List<ParticleSystem>();
 
-	private const bool DEBUG = false;
+	private const bool DEBUG = true;
 
 	//defines for force
 	private const float PI = (float)Math.PI;
-	private const float pitchForce = 3*PI/2;
-	private const float rollForce = 3*PI/2;
-	private const float yawForce = PI/2;
-	private const float forwardForce = 8.0f;
-	private const float backwardForce = 4.0f;
-	private const float transUpForce = 6.0f;
-	private const float transDownForce = 4.0f;
-	private const float transLeftForce = 4.0f;
-	private const float transRightForce = 4.0f;
+	private float pitchForce = 3*PI/2;
+	private float rollForce = 3*PI/2;
+	private float yawForce = PI/2;
+	private float forwardForce = 8.0f;
+	private float backwardForce = 4.0f;
+	private float transUpForce = 6.0f;
+	private float transDownForce = 4.0f;
+	private float transLeftForce = 4.0f;
+	private float transRightForce = 4.0f;
 
-	private const float pitchClamp = pitchForce/2;
-	private const float rollClamp = rollForce/2;
-	private const float yawClamp = yawForce/2;
+	private float pitchClamp = 3*PI/4;
+	private float rollClamp = 3*PI/4;
+	private float yawClamp = PI/4;
 
 	//Define input axes
 	private float pitchAxis, rollAxis, yawAxis, surgeAxis, swayAxis, heaveAxis;
@@ -34,29 +34,23 @@ public class PlayerMovement : MonoBehaviour {
 
 	private Vector3 relAngVel, relTranVel;
 
-	private void Start(){
+	void Start(){
 		rb = GetComponent<Rigidbody>();
 		trans = GetComponent<Transform>();
 
 		foreach (ParticleSystem ps in GetComponentsInChildren<ParticleSystem>()) {
-			if (transform.name.StartsWith("PitchUp"))
+			if (ps.name.StartsWith("PitchUp"))
 				pitchUpRCS.Add(ps);
-			if (transform.name.StartsWith("PitchDown"))
+			if (ps.name.StartsWith("PitchDown"))
 				pitchDownRCS.Add(ps);	
 		}
-
-		Debug.Log(pitchUpRCS.Count);
-
-
-		foreach (ParticleSystem ps in pitchUpRCS)
-			Debug.Log(ps);
 
 		keySAS = true;
 		keyABS = true;
 	}
 
 	// Update is called once per frame
-	private void Update(){
+	void Update(){
 		//grab axis of controller
 		pitchAxis = Input.GetAxisRaw("Pitch");
 		rollAxis = Input.GetAxisRaw("Roll");
@@ -74,85 +68,76 @@ public class PlayerMovement : MonoBehaviour {
 	}
 
 	// Update game at fixed intervals
-	private void FixedUpdate(){
+	void FixedUpdate(){
 		//update relative rotation and translation velocities
 		updateRelVel();
 
-		ShipRotation();
-		ShipTranslation();
+		rotateShip();
+		moveShip();
 
-		if (DEBUG) DisplayDebug();
+		if (DEBUG) displayDebug();
 	}
 
-	// Rotates ship based on SAS mode
-	private void ShipRotation(){
-		//if SAS mode is on
-		if (keySAS){
-			//pitch
-			SAS(
-				pitchAxis, //x axis
-				Vector3.right, //direction vector
-				pitchForce, //force
-				0, //index for x
-				pitchClamp //max force for SAS
-			);
-			//yaw
-			SAS(
-				yawAxis, //y axis
-				Vector3.up, //direction vector
-				yawForce, //force
-				1, //index for y
-				yawClamp //max force for SAS
-			);
-			//roll
-			SAS(
-				rollAxis, //z axis
-				Vector3.forward, //direction vector
-				rollForce, //force
-				2, //index for z
-				rollClamp //max force for SAS
-			);
-		//if SAS mode is off
+	// Collective method for all ship rotation
+	private void rotateShip(){
+		//pitch
+		rotateAxis(
+			pitchAxis, //x axis
+			Vector3.right, //direction vector
+			pitchForce, //force
+			0, //index for x
+			pitchClamp //max force for SAS
+		);
+		//yaw
+		rotateAxis(
+			yawAxis, //y axis
+			Vector3.up, //direction vector
+			yawForce, //force
+			1, //index for y
+			yawClamp //max force for SAS
+		);
+		//roll
+		rotateAxis(
+			rollAxis, //z axis
+			Vector3.forward, //direction vector
+			rollForce, //force
+			2, //index for z
+			rollClamp //max force for SAS
+		);
+
+	}
+
+	// Logic for rotating an individual axis
+	private void rotateAxis(float axis, Vector3 dirVector, float force, int relIndex, float maxClamp){
+		//if SAS is off
+		if (!keySAS){
+			//if axis is positive
+			if (axis > 0.0f){
+				rb.AddRelativeTorque(dirVector * force * axis, ForceMode.Force);
+			//if axis is negative
+			} else if (axis < 0.0f){
+				rb.AddRelativeTorque(dirVector * force * axis, ForceMode.Force);
+			}
+		//if SAS is on
 		} else {
-			//no automatic counter thrust
-			rb.AddRelativeTorque(Vector3.right * pitchForce * pitchAxis, ForceMode.Force);
-			rb.AddRelativeTorque(Vector3.forward * rollForce * rollAxis, ForceMode.Force);
-			rb.AddRelativeTorque(Vector3.up * yawForce * yawAxis, ForceMode.Force);
-		}
-	}
-	// Stability Assist System
-	private void SAS(float axis, Vector3 dirVector, float force, int relIndex, float maxClamp){
-		//if no input
-		if (axis == 0){
-			VelLevelOff(SetAngVel, ref relAngVel, force, force, relIndex, 0.0f);
-			VelMatch(rb.AddRelativeTorque, relAngVel, dirVector, force, force, relIndex, 0.0f);
-		//if there is user input on a particular axis
-		} else {
-			//apply force to rigid body using the clamp method
-			//limits the turn rate to a specified velocity
-			float clamp = maxClamp * axis;
-			VelLevelOff(SetAngVel, ref relAngVel, force, force, relIndex, clamp);
-			VelMatch(rb.AddRelativeTorque, relAngVel, dirVector, force, force, relIndex, clamp);
-			ActivateRCS(pitchUpRCS, pitchDownRCS, axis);
+			if (axis == 0){
+				velLevelOff(setAngVel, ref relAngVel, force, force, relIndex, 0.0f);
+				velMatch(rb.AddRelativeTorque, relAngVel, dirVector, force, force, relIndex, 0.0f);
+			//if there is user input on a particular axis
+			} else {
+				//apply force to rigid body using the clamp method
+				//limits the turn rate to a specified velocity
+				float clamp = maxClamp * axis;
+				velLevelOff(setAngVel, ref relAngVel, force, force, relIndex, clamp);
+				velMatch(rb.AddRelativeTorque, relAngVel, dirVector, force, force, relIndex, clamp);
+			}
 		}
 	}
 
-	/*
-	private void ShipRCS(float axis, Vector3 dirVector, float force, float relativeDir){
-		//if axis is positive
-		if (axis > 0.0f){
-			rb.AddRelativeTorque(dirVector * force * axis, ForceMode.Force);
-		//if axis is negative
-		} else if (axis < 0.0f){
-			rb.AddRelativeForce(dirVector * force * axis, ForceMode.Force);
-		}
-	}
-	*/
-
-	// Translate whole ship with the ShipThrust function
-	private void ShipTranslation(){
+	// Collective method for all ship translations
+	private void moveShip(){
 		//starboard and port
-		ShipThrust(
+		moveOnAxis(
 			swayAxis, //x axis
 			Vector3.right, //direction vector
 			transRightForce, //positive force
@@ -160,7 +145,7 @@ public class PlayerMovement : MonoBehaviour {
 			0 //index for x
 		);
 		//overhead and deck
-		ShipThrust(
+		moveOnAxis(
 			heaveAxis, //y axis
 			Vector3.up, //direction vector
 			transUpForce, //positive force
@@ -168,7 +153,7 @@ public class PlayerMovement : MonoBehaviour {
 			1 //index for y
 		);
 		//bow and aft
-		ShipThrust(
+		moveOnAxis(
 			surgeAxis, //z axis
 			Vector3.forward, //direction vector
 			forwardForce, //positive force
@@ -177,7 +162,7 @@ public class PlayerMovement : MonoBehaviour {
 		);
 	}
 	// Ship thrust for individual axis
-	private void ShipThrust(float axis, Vector3 dirVector, float posForce, float negForce, int relIndex){
+	private void moveOnAxis(float axis, Vector3 dirVector, float posForce, float negForce, int relIndex){
 		//if axis is positive
 		if (axis > 0.0f){
 			rb.AddRelativeForce(dirVector * posForce * axis, ForceMode.Force);
@@ -188,15 +173,15 @@ public class PlayerMovement : MonoBehaviour {
 		} else if (keyABS){
 			//if vel is not forward on relative z axis
 			if (relIndex != 2 || relTranVel[2] < 0){
-				VelLevelOff(SetVel, ref relTranVel, posForce/rb.mass, negForce/rb.mass, relIndex, 0.0f);
-				VelMatch(rb.AddRelativeForce, relTranVel, dirVector, posForce/rb.mass, negForce/rb.mass,
+				velLevelOff(setVel, ref relTranVel, posForce/rb.mass, negForce/rb.mass, relIndex, 0.0f);
+				velMatch(rb.AddRelativeForce, relTranVel, dirVector, posForce/rb.mass, negForce/rb.mass,
 					relIndex, 0.0f);
 			}
 		}
 	}
 	
-	// Level off the velocity to a target velocity if it is near enough to target
-	private void VelLevelOff(Action<Vector3> changeVel, ref Vector3 relVel, float posForce, float negForce,
+	// Level off the velocity of an axis to a target velocity if it is near enough to target
+	private void velLevelOff(Action<Vector3> changeVel, ref Vector3 relVel, float posForce, float negForce,
 			int relIndex, float target){
 		//if current velocity is within the positive and negative force of target
 		if (relVel[relIndex] < target + (negForce * Time.deltaTime) &&
@@ -204,6 +189,7 @@ public class PlayerMovement : MonoBehaviour {
 			//set local velocity to target
 			Vector3 vel = relVel;
 			vel[relIndex] = target;
+			//update global Vector3 relative velocity to new velocity
 			relVel = vel;
 			//convert local vector to world vector
 			changeVel(transform.TransformDirection(vel));
@@ -211,7 +197,7 @@ public class PlayerMovement : MonoBehaviour {
 	}
 
 	// Apply full counter force to rigid body to match a velocity
-	private void VelMatch(Action<Vector3, ForceMode> applyForce, Vector3 relVel, Vector3 dirVector,
+	private void velMatch(Action<Vector3, ForceMode> applyForce, Vector3 relVel, Vector3 dirVector,
 			float posForce, float negForce, int relIndex, float target){
 		//if the current velocity of the axis is greater than the target
 		if (relVel[relIndex] > target){
@@ -231,25 +217,17 @@ public class PlayerMovement : MonoBehaviour {
 	}
 
 	// set rb's velocity
-	private void SetVel(Vector3 tranVel){
+	private void setVel(Vector3 tranVel){
 		rb.velocity = tranVel;
 	}
 
 	// set rb's angular velocity
-	private void SetAngVel(Vector3 angVel){
+	private void setAngVel(Vector3 angVel){
 		rb.angularVelocity = angVel;
 	}
 
-	private void ActivateRCS(List<ParticleSystem> posPartSys, List<ParticleSystem> negPartSys,	
-			float axis){
-		foreach (ParticleSystem ps in posPartSys){
-			ParticleSystem.MainModule main = ps.main;
-			main.startLifetime = 0.2f;
-		}
-	}
-
 	// Collection of debug logs
-	private void DisplayDebug(){
+	private void displayDebug(){
 		Debug.Log("Speed = " + rb.velocity.magnitude + " m/s");
 		Debug.Log("ABS = " + keyABS);
 		Debug.Log("relTranVel = " + relTranVel);
