@@ -9628,6 +9628,7 @@ GameObject:
   - component: {fileID: 1794829371}
   - component: {fileID: 1794829374}
   - component: {fileID: 1794829373}
+  - component: {fileID: 1794829375}
   m_Layer: 0
   m_Name: FighterMediumPrefab
   m_TagString: Untagged
@@ -9698,6 +9699,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9efd4f719723aaa4497db1169c694131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1794829375
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1794829369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18cfc22256081ea4f8bec4c94cd52327, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &2131290554

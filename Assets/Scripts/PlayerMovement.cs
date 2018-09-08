@@ -2,14 +2,16 @@
 using System;
 using System.Collections.Generic;
 
+[RequireComponent(typeof(PlayerRCS))]
+[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(Transform))]
+
 public class PlayerMovement : MonoBehaviour {
 	private Rigidbody rb;
 	private Transform trans;
+	PlayerRCS rcs;
 
-	List<ParticleSystem> pitchUpRCS = new List<ParticleSystem>();
-	List<ParticleSystem> pitchDownRCS = new List<ParticleSystem>();
-
-	private const bool DEBUG = true;
+	private const bool DEBUG = false;
 
 	//defines for force
 	private const float PI = (float)Math.PI;
@@ -37,15 +39,9 @@ public class PlayerMovement : MonoBehaviour {
 	void Start(){
 		rb = GetComponent<Rigidbody>();
 		trans = GetComponent<Transform>();
+		rcs = gameObject.AddComponent<PlayerRCS>() as PlayerRCS;
 
-		foreach (ParticleSystem ps in GetComponentsInChildren<ParticleSystem>()) {
-			if (ps.name.StartsWith("PitchUp"))
-				pitchUpRCS.Add(ps);
-			if (ps.name.StartsWith("PitchDown"))
-				pitchDownRCS.Add(ps);	
-		}
-
-		keySAS = true;
+		keySAS = true; 
 		keyABS = true;
 	}
 
@@ -75,6 +71,7 @@ public class PlayerMovement : MonoBehaviour {
 		rotateShip();
 		moveShip();
 
+		rcs.StopParticle(ref rcs.pitchUpRCS);
 		if (DEBUG) displayDebug();
 	}
 
