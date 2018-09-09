@@ -28,18 +28,27 @@ public class PlayerRCS : MonoBehaviour {
 		}
 	}
 
-	public void CalcIntensity(){
-		Debug.Log("Hello world");
+	public bool CalcPos(float axis){
+		if (axis > 0)
+			return true;
+		else
+			return false;
 	}
-	public void SetIntensity(ref ParticleSystem ps, float intensity){
-		//ps.Start();
+
+	public void PlayParticle(int axisIndex, bool pos, float axis){
+		List<ParticleSystem> rcsList = this.getRCS(axisIndex, pos);
+		foreach (ParticleSystem p in rcsList){
+			p.Play();
+		}
 	}
-	public void StopParticle(ref List<ParticleSystem> rcsList){
+
+	public void StopParticle(int axisIndex, bool pos){
+		List<ParticleSystem> rcsList = this.getRCS(axisIndex, pos);
 		foreach (ParticleSystem ps in rcsList){
 			ps.Stop();
 		}
 	}
-	public List<ParticleSystem> GetRCS(int axisIndex, bool pos){
+	private List<ParticleSystem> getRCS(int axisIndex, bool pos){
 		switch (axisIndex){
 			case 0:
 				if (pos)

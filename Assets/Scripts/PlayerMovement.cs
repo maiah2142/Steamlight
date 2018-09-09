@@ -69,9 +69,8 @@ public class PlayerMovement : MonoBehaviour {
 		updateRelVel();
 
 		rotateShip();
-		moveShip();
+		//moveShip();
 
-		rcs.StopParticle(ref rcs.pitchUpRCS);
 		if (DEBUG) displayDebug();
 	}
 
@@ -111,26 +110,33 @@ public class PlayerMovement : MonoBehaviour {
 			//if axis is positive
 			if (axis > 0.0f){
 				rb.AddRelativeTorque(dirVector * force * axis, ForceMode.Force);
+				rcs.PlayParticle(relIndex, true, axis);
 			//if axis is negative
 			} else if (axis < 0.0f){
 				rb.AddRelativeTorque(dirVector * force * axis, ForceMode.Force);
+				rcs.PlayParticle(relIndex, false, axis);
+			//if no input
+			} else {
+				rcs.StopParticle(relIndex, true);
+				rcs.StopParticle(relIndex, false);
 			}
 		//if SAS is on
 		} else {
 			if (axis == 0){
-				velLevelOff(setAngVel, ref relAngVel, force, force, relIndex, 0.0f);
-				velMatch(rb.AddRelativeTorque, relAngVel, dirVector, force, force, relIndex, 0.0f);
+				zeroOutVel(setAngVel, ref relAngVel, force, force, relIndex, 0.0f);
+				matchVel(rcs.PlayParticle, rcs.StopParticle, rb.AddRelativeTorque, relAngVel, dirVector, force, force, relIndex, 0.0f);
 			//if there is user input on a particular axis
 			} else {
 				//apply force to rigid body using the clamp method
 				//limits the turn rate to a specified velocity
 				float clamp = maxClamp * axis;
-				velLevelOff(setAngVel, ref relAngVel, force, force, relIndex, clamp);
-				velMatch(rb.AddRelativeTorque, relAngVel, dirVector, force, force, relIndex, clamp);
+				zeroOutVel(setAngVel, ref relAngVel, force, force, relIndex, clamp);
+				matchVel(rcs.PlayParticle, rcs.StopParticle, rb.AddRelativeTorque, relAngVel, dirVector, force, force, relIndex, clamp);
 			}
 		}
 	}
 
+	/*
 	// Collective method for all ship translations
 	private void moveShip(){
 		//starboard and port
@@ -170,15 +176,16 @@ public class PlayerMovement : MonoBehaviour {
 		} else if (keyABS){
 			//if vel is not forward on relative z axis
 			if (relIndex != 2 || relTranVel[2] < 0){
-				velLevelOff(setVel, ref relTranVel, posForce/rb.mass, negForce/rb.mass, relIndex, 0.0f);
-				velMatch(rb.AddRelativeForce, relTranVel, dirVector, posForce/rb.mass, negForce/rb.mass,
+				zeroOutVel(setVel, ref relTranVel, posForce/rb.mass, negForce/rb.mass, relIndex, 0.0f);
+				matchVel(rb.AddRelativeForce, relTranVel, dirVector, posForce/rb.mass, negForce/rb.mass,
 					relIndex, 0.0f);
 			}
 		}
 	}
+	*/
 	
 	// Level off the velocity of an axis to a target velocity if it is near enough to target
-	private void velLevelOff(Action<Vector3> changeVel, ref Vector3 relVel, float posForce, float negForce,
+	private void zeroOutVel(Action<Vector3> changeVel, ref Vector3 relVel, float posForce, float negForce,
 			int relIndex, float target){
 		//if current velocity is within the positive and negative force of target
 		if (relVel[relIndex] < target + (negForce * Time.deltaTime) &&
@@ -190,20 +197,29 @@ public class PlayerMovement : MonoBehaviour {
 			relVel = vel;
 			//convert local vector to world vector
 			changeVel(transform.TransformDirection(vel));
+			rcs.StopParticle(relIndex, false);
+			rcs.StopParticle(relIndex, true);
 		}
 	}
 
 	// Apply full counter force to rigid body to match a velocity
-	private void velMatch(Action<Vector3, ForceMode> applyForce, Vector3 relVel, Vector3 dirVector,
+	private void matchVel(Action<int, bool, float> playAnimation, Action<int, bool> stopAnimation, Action<Vector3, ForceMode> applyForce, Vector3 relVel, Vector3 dirVector,
 			float posForce, float negForce, int relIndex, float target){
 		//if the current velocity of the axis is greater than the target
 		if (relVel[relIndex] > target){
 			//apply negative force to the rigid body
 			applyForce(dirVector * -negForce, ForceMode.Force);
+			stopAnimation(relIndex, true);
+			playAnimation(relIndex, false, 1);
 		//if the current velocity of the axis is less than the target
 		} else if (relVel[relIndex] < target){
 			//apply positive force to the rigid body
 			applyForce(dirVector * posForce, ForceMode.Force);
+			stopAnimation(relIndex, false);
+			playAnimation(relIndex, true, 1);
+		} else {
+			stopAnimation(relIndex, true);
+			stopAnimation(relIndex, false);
 		}
 	}
 
