@@ -37,8 +37,8 @@ public class PlayerRCS : MonoBehaviour {
 
 	public void PlayParticle(int axisIndex, bool pos, float axis){
 		List<ParticleSystem> rcsList = this.getRCS(axisIndex, pos);
-		foreach (ParticleSystem p in rcsList){
-			p.Play();
+		foreach (ParticleSystem ps in rcsList){
+			ps.Play();
 		}
 	}
 

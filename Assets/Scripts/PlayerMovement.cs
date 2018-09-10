@@ -69,7 +69,7 @@ public class PlayerMovement : MonoBehaviour {
 		updateRelVel();
 
 		rotateShip();
-		//moveShip();
+		moveShip();
 
 		if (DEBUG) displayDebug();
 	}
@@ -105,7 +105,7 @@ public class PlayerMovement : MonoBehaviour {
 
 	// Logic for rotating an individual axis
 	private void rotateAxis(float axis, Vector3 dirVector, float force, int relIndex, float maxClamp){
-		//if SAS is off
+		//if SAS is off (manual mode)
 		if (!keySAS){
 			//if axis is positive
 			if (axis > 0.0f){
@@ -120,23 +120,23 @@ public class PlayerMovement : MonoBehaviour {
 				rcs.StopParticle(relIndex, true);
 				rcs.StopParticle(relIndex, false);
 			}
-		//if SAS is on
+		//if SAS is on (automatic drag mode) 
 		} else {
 			if (axis == 0){
 				zeroOutVel(setAngVel, ref relAngVel, force, force, relIndex, 0.0f);
-				matchVel(rcs.PlayParticle, rcs.StopParticle, rb.AddRelativeTorque, relAngVel, dirVector, force, force, relIndex, 0.0f);
+				matchVel(rcs.PlayParticle, rcs.StopParticle, rb.AddRelativeTorque, relAngVel, dirVector,
+				force, force, relIndex, 0.0f);
 			//if there is user input on a particular axis
 			} else {
 				//apply force to rigid body using the clamp method
 				//limits the turn rate to a specified velocity
 				float clamp = maxClamp * axis;
 				zeroOutVel(setAngVel, ref relAngVel, force, force, relIndex, clamp);
-				matchVel(rcs.PlayParticle, rcs.StopParticle, rb.AddRelativeTorque, relAngVel, dirVector, force, force, relIndex, clamp);
+				matchVel(rcs.PlayParticle, rcs.StopParticle, rb.AddRelativeTorque, relAngVel, dirVector,
+				force, force, relIndex, clamp);
 			}
 		}
 	}
-
-	/*
 	// Collective method for all ship translations
 	private void moveShip(){
 		//starboard and port
@@ -177,12 +177,11 @@ public class PlayerMovement : MonoBehaviour {
 			//if vel is not forward on relative z axis
 			if (relIndex != 2 || relTranVel[2] < 0){
 				zeroOutVel(setVel, ref relTranVel, posForce/rb.mass, negForce/rb.mass, relIndex, 0.0f);
-				matchVel(rb.AddRelativeForce, relTranVel, dirVector, posForce/rb.mass, negForce/rb.mass,
+				matchVel(placeholderAnimation, placeholderAnimation2, rb.AddRelativeForce, relTranVel, dirVector, posForce/rb.mass, negForce/rb.mass,
 					relIndex, 0.0f);
 			}
 		}
 	}
-	*/
 	
 	// Level off the velocity of an axis to a target velocity if it is near enough to target
 	private void zeroOutVel(Action<Vector3> changeVel, ref Vector3 relVel, float posForce, float negForce,
@@ -246,5 +245,10 @@ public class PlayerMovement : MonoBehaviour {
 		Debug.Log("relTranVel = " + relTranVel);
 		Debug.Log("SAS = " + keySAS);
 		Debug.Log("relAngVel = " + relAngVel);
+	}
+
+	private void placeholderAnimation(int axisIndex, bool pos, float axis){
+	}
+	private void placeholderAnimation2(int axisIndex, bool pos){
 	}
 }
