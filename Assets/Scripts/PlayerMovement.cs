@@ -177,7 +177,8 @@ public class PlayerMovement : MonoBehaviour {
 			//if vel is not forward on relative z axis
 			if (relIndex != 2 || relTranVel[2] < 0){
 				zeroOutVel(setVel, ref relTranVel, posForce/rb.mass, negForce/rb.mass, relIndex, 0.0f);
-				matchVel(placeholderAnimation, placeholderAnimation2, rb.AddRelativeForce, relTranVel, dirVector, posForce/rb.mass, negForce/rb.mass,
+				matchVel(placeholderAnimation, placeholderAnimation2, rb.AddRelativeForce, relTranVel,
+				dirVector, posForce/rb.mass, negForce/rb.mass,
 					relIndex, 0.0f);
 			}
 		}
@@ -202,8 +203,9 @@ public class PlayerMovement : MonoBehaviour {
 	}
 
 	// Apply full counter force to rigid body to match a velocity
-	private void matchVel(Action<int, bool, float> playAnimation, Action<int, bool> stopAnimation, Action<Vector3, ForceMode> applyForce, Vector3 relVel, Vector3 dirVector,
-			float posForce, float negForce, int relIndex, float target){
+	private void matchVel(Action<int, bool, float> playAnimation, Action<int, bool> stopAnimation,
+			Action<Vector3, ForceMode> applyForce, Vector3 relVel, Vector3 dirVector, float posForce,
+			float negForce, int relIndex, float target){
 		//if the current velocity of the axis is greater than the target
 		if (relVel[relIndex] > target){
 			//apply negative force to the rigid body
