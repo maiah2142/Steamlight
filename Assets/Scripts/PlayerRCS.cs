@@ -38,6 +38,8 @@ public class PlayerRCS : MonoBehaviour {
 	public void PlayParticle(int axisIndex, bool pos, float axis){
 		List<ParticleSystem> rcsList = this.getRCS(axisIndex, pos);
 		foreach (ParticleSystem ps in rcsList){
+			var main = ps.main;
+			main.startLifetime = 0.1f + Mathf.Abs(axis * 0.1f);
 			ps.Play();
 		}
 	}

@@ -123,7 +123,7 @@ public class PlayerMovement : MonoBehaviour {
 		//if SAS is on (automatic drag mode) 
 		} else {
 			if (axis == 0){
-				zeroOutVel(setAngVel, ref relAngVel, force, force, relIndex, 0.0f);
+				zeroOutVel(rcs.StopParticle, setAngVel, ref relAngVel, force, force, relIndex, 0.0f);
 				matchVel(rcs.PlayParticle, rcs.StopParticle, rb.AddRelativeTorque, relAngVel, dirVector,
 				force, force, relIndex, 0.0f);
 			//if there is user input on a particular axis
@@ -131,7 +131,7 @@ public class PlayerMovement : MonoBehaviour {
 				//apply force to rigid body using the clamp method
 				//limits the turn rate to a specified velocity
 				float clamp = maxClamp * axis;
-				zeroOutVel(setAngVel, ref relAngVel, force, force, relIndex, clamp);
+				zeroOutVel(rcs.StopParticle, setAngVel, ref relAngVel, force, force, relIndex, clamp);
 				matchVel(rcs.PlayParticle, rcs.StopParticle, rb.AddRelativeTorque, relAngVel, dirVector,
 				force, force, relIndex, clamp);
 			}
@@ -176,7 +176,7 @@ public class PlayerMovement : MonoBehaviour {
 		} else if (keyABS){
 			//if vel is not forward on relative z axis
 			if (relIndex != 2 || relTranVel[2] < 0){
-				zeroOutVel(setVel, ref relTranVel, posForce/rb.mass, negForce/rb.mass, relIndex, 0.0f);
+				zeroOutVel(placeholderAnimation2, setVel, ref relTranVel, posForce/rb.mass, negForce/rb.mass, relIndex, 0.0f);
 				matchVel(placeholderAnimation, placeholderAnimation2, rb.AddRelativeForce, relTranVel,
 				dirVector, posForce/rb.mass, negForce/rb.mass,
 					relIndex, 0.0f);
@@ -185,8 +185,8 @@ public class PlayerMovement : MonoBehaviour {
 	}
 	
 	// Level off the velocity of an axis to a target velocity if it is near enough to target
-	private void zeroOutVel(Action<Vector3> changeVel, ref Vector3 relVel, float posForce, float negForce,
-			int relIndex, float target){
+	private void zeroOutVel(Action<int, bool> stopAnimation, Action<Vector3> changeVel, ref Vector3 relVel,
+			float posForce, float negForce, int relIndex, float target){
 		//if current velocity is within the positive and negative force of target
 		if (relVel[relIndex] < target + (negForce * Time.deltaTime) &&
 		    relVel[relIndex] > target - (posForce * Time.deltaTime)){
@@ -197,8 +197,8 @@ public class PlayerMovement : MonoBehaviour {
 			relVel = vel;
 			//convert local vector to world vector
 			changeVel(transform.TransformDirection(vel));
-			rcs.StopParticle(relIndex, false);
-			rcs.StopParticle(relIndex, true);
+			stopAnimation(relIndex, false);
+			stopAnimation(relIndex, true);
 		}
 	}
 
