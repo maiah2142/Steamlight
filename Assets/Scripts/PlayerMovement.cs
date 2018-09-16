@@ -7,11 +7,12 @@ using System.Collections.Generic;
 [RequireComponent(typeof(Transform))]
 
 public class PlayerMovement : MonoBehaviour {
-	private Rigidbody rb;
-	private Transform trans;
+	public Rigidbody rb;
+	public Transform trans;
 	PlayerRCS rcs;
 
 	private const bool DEBUG = false;
+
 
 	//defines for force
 	private const float PI = (float)Math.PI;
@@ -38,6 +39,11 @@ public class PlayerMovement : MonoBehaviour {
 
 	void Start(){
 		rb = GetComponent<Rigidbody>();
+		rb.inertiaTensorRotation = Quaternion.identity;
+		rb.centerOfMass = Vector3.zero;
+		Debug.Log(rb.mass);
+
+
 		trans = GetComponent<Transform>();
 		rcs = gameObject.AddComponent<PlayerRCS>() as PlayerRCS;
 
@@ -109,11 +115,11 @@ public class PlayerMovement : MonoBehaviour {
 		if (!keySAS){
 			//if axis is positive
 			if (axis > 0.0f){
-				rb.AddRelativeTorque(dirVector * force * axis, ForceMode.Force);
+				rb.AddRelativeTorque(dirVector * force * axis, ForceMode.Acceleration);
 				rcs.PlayParticle(relIndex, true, axis);
 			//if axis is negative
 			} else if (axis < 0.0f){
-				rb.AddRelativeTorque(dirVector * force * axis, ForceMode.Force);
+				rb.AddRelativeTorque(dirVector * force * axis,  ForceMode.Acceleration);
 				rcs.PlayParticle(relIndex, false, axis);
 			//if no input
 			} else {
@@ -168,10 +174,10 @@ public class PlayerMovement : MonoBehaviour {
 	private void moveOnAxis(float axis, Vector3 dirVector, float posForce, float negForce, int relIndex){
 		//if axis is positive
 		if (axis > 0.0f){
-			rb.AddRelativeForce(dirVector * posForce * axis, ForceMode.Force);
+			rb.AddRelativeForce(dirVector * posForce * axis, ForceMode.Acceleration);
 		//if axis is negative
 		} else if (axis < 0.0f){
-			rb.AddRelativeForce(dirVector * negForce * axis, ForceMode.Force);
+			rb.AddRelativeForce(dirVector * negForce * axis,  ForceMode.Acceleration);
 		//if no input and ABS system is on
 		} else if (keyABS){
 			//if vel is not forward on relative z axis
@@ -209,13 +215,13 @@ public class PlayerMovement : MonoBehaviour {
 		//if the current velocity of the axis is greater than the target
 		if (relVel[relIndex] > target){
 			//apply negative force to the rigid body
-			applyForce(dirVector * -negForce, ForceMode.Force);
+			applyForce(dirVector * -negForce,  ForceMode.Acceleration);
 			stopAnimation(relIndex, true);
 			playAnimation(relIndex, false, 1);
 		//if the current velocity of the axis is less than the target
 		} else if (relVel[relIndex] < target){
 			//apply positive force to the rigid body
-			applyForce(dirVector * posForce, ForceMode.Force);
+			applyForce(dirVector * posForce,  ForceMode.Acceleration);
 			stopAnimation(relIndex, false);
 			playAnimation(relIndex, true, 1);
 		} else {
