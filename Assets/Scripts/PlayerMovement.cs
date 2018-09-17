@@ -7,12 +7,11 @@ using System.Collections.Generic;
 [RequireComponent(typeof(Transform))]
 
 public class PlayerMovement : MonoBehaviour {
-	public Rigidbody rb;
-	public Transform trans;
+	private Rigidbody rb;
+	private Transform trans;
 	PlayerRCS rcs;
 
 	private const bool DEBUG = false;
-
 
 	//defines for force
 	private const float PI = (float)Math.PI;
@@ -39,11 +38,6 @@ public class PlayerMovement : MonoBehaviour {
 
 	void Start(){
 		rb = GetComponent<Rigidbody>();
-		rb.inertiaTensorRotation = Quaternion.identity;
-		rb.centerOfMass = Vector3.zero;
-		Debug.Log(rb.mass);
-
-
 		trans = GetComponent<Transform>();
 		rcs = gameObject.AddComponent<PlayerRCS>() as PlayerRCS;
 
@@ -71,7 +65,7 @@ public class PlayerMovement : MonoBehaviour {
 
 	// Update game at fixed intervals
 	void FixedUpdate(){
-		//update relative rotation and translation velocities
+		//update relative (local) rotation and translation velocities
 		updateRelVel();
 
 		rotateShip();
@@ -115,7 +109,7 @@ public class PlayerMovement : MonoBehaviour {
 		if (!keySAS){
 			//if axis is positive
 			if (axis > 0.0f){
-				rb.AddRelativeTorque(dirVector * force * axis, ForceMode.Acceleration);
+				rb.AddRelativeTorque(dirVector * force * axis,  ForceMode.Acceleration);
 				rcs.PlayParticle(relIndex, true, axis);
 			//if axis is negative
 			} else if (axis < 0.0f){
@@ -131,15 +125,15 @@ public class PlayerMovement : MonoBehaviour {
 			if (axis == 0){
 				zeroOutVel(rcs.StopParticle, setAngVel, ref relAngVel, force, force, relIndex, 0.0f);
 				matchVel(rcs.PlayParticle, rcs.StopParticle, rb.AddRelativeTorque, relAngVel, dirVector,
-				force, force, relIndex, 0.0f);
+					force, force, relIndex, 0.0f);
 			//if there is user input on a particular axis
 			} else {
 				//apply force to rigid body using the clamp method
-				//limits the turn rate to a specified velocity
+				//limits the turn rate to a specified velocity defined by axis input
 				float clamp = maxClamp * axis;
 				zeroOutVel(rcs.StopParticle, setAngVel, ref relAngVel, force, force, relIndex, clamp);
 				matchVel(rcs.PlayParticle, rcs.StopParticle, rb.AddRelativeTorque, relAngVel, dirVector,
-				force, force, relIndex, clamp);
+					force, force, relIndex, clamp);
 			}
 		}
 	}
@@ -182,10 +176,10 @@ public class PlayerMovement : MonoBehaviour {
 		} else if (keyABS){
 			//if vel is not forward on relative z axis
 			if (relIndex != 2 || relTranVel[2] < 0){
-				zeroOutVel(placeholderAnimation2, setVel, ref relTranVel, posForce/rb.mass, negForce/rb.mass, relIndex, 0.0f);
+				zeroOutVel(placeholderAnimation2, setVel, ref relTranVel, posForce, negForce, relIndex,
+					0.0f);
 				matchVel(placeholderAnimation, placeholderAnimation2, rb.AddRelativeForce, relTranVel,
-				dirVector, posForce/rb.mass, negForce/rb.mass,
-					relIndex, 0.0f);
+					dirVector, posForce, negForce, relIndex, 0.0f);
 			}
 		}
 	}
@@ -224,6 +218,7 @@ public class PlayerMovement : MonoBehaviour {
 			applyForce(dirVector * posForce,  ForceMode.Acceleration);
 			stopAnimation(relIndex, false);
 			playAnimation(relIndex, true, 1);
+		//stop animations
 		} else {
 			stopAnimation(relIndex, true);
 			stopAnimation(relIndex, false);
@@ -236,12 +231,12 @@ public class PlayerMovement : MonoBehaviour {
 		relTranVel = transform.InverseTransformDirection(rb.velocity);
 	}
 
-	// set rb's velocity
+	// set rb's world velocity
 	private void setVel(Vector3 tranVel){
 		rb.velocity = tranVel;
 	}
 
-	// set rb's angular velocity
+	// set rb's angular world velocity
 	private void setAngVel(Vector3 angVel){
 		rb.angularVelocity = angVel;
 	}
@@ -255,8 +250,7 @@ public class PlayerMovement : MonoBehaviour {
 		Debug.Log("relAngVel = " + relAngVel);
 	}
 
-	private void placeholderAnimation(int axisIndex, bool pos, float axis){
-	}
-	private void placeholderAnimation2(int axisIndex, bool pos){
-	}
+	// Placeholder, do nothing at the moment
+	private void placeholderAnimation(int axisIndex, bool pos, float axis){}
+	private void placeholderAnimation2(int axisIndex, bool pos){}
 }
