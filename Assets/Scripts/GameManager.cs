@@ -13,24 +13,10 @@ public class GameManager : MonoBehaviour {
 		//array is dynamically defined at start time depending on number of children
 		racePosts = new GameObject[gameObject.transform.childCount];
 
-		/*
-		int init = 0;
-		foreach (GameObject go in Resources.FindObjectsOfTypeAll(typeof(GameObject)) as GameObject[]){
-			if (go.name.StartsWith("RacePost")){
-				racePosts[init] = go;
-				init++;
-			}
-		}
-		*/
 		foreach (Transform child in transform){
 			int raceIndex = int.Parse(Regex.Match(child.gameObject.name, @"\d+").Value);
 			racePosts[raceIndex] = child.gameObject;
 		}
-
-		for(int i = 0; i < racePosts.Length; i++)
-			Debug.Log(racePosts[i].name);
-
-		//Debug.Log("Number of race posts: " + racePosts.Length);
 	}
 
 	// Increment to the next active race post

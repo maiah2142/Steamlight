@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 
+using UnityEngine.UI; //temporary
+
 [RequireComponent(typeof(PlayerRCS))]
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(Transform))]
@@ -61,6 +63,8 @@ public class PlayerMovement : MonoBehaviour {
 			keySAS = !keySAS;
 		if (Input.GetButtonDown("ABS"))
 			keyABS = !keyABS;
+		updateADS(keyABS);
+		updateSAS(keySAS);
 	}
 
 	// Update game at fixed intervals
@@ -239,6 +243,21 @@ public class PlayerMovement : MonoBehaviour {
 	// set rb's angular world velocity
 	private void setAngVel(Vector3 angVel){
 		rb.angularVelocity = angVel;
+	}
+
+	public Text ADSText;
+	void updateADS (bool ADS) {
+		if(ADS)
+			ADSText.text = "ADS: On";
+		else
+			ADSText.text = "ADS: Off";
+	}
+	public Text SASText;
+	void updateSAS (bool SAS) {
+		if(SAS)
+			SASText.text = "SAS: On";
+		else
+			SASText.text = "SAS: Off";
 	}
 
 	// Collection of debug logs
