@@ -48,18 +48,18 @@ public class PlayerMovement : MonoBehaviour {
 	// Update is called once per frame
 	void Update(){
 		//grab axis of controller
-		pitchAxis = Input.GetAxisRaw("Pitch");
-		rollAxis = Input.GetAxisRaw("Roll");
-		yawAxis = Input.GetAxisRaw("Yaw");
-		surgeAxis = Input.GetAxisRaw("Surge");
-		swayAxis = Input.GetAxisRaw("Sway");
-		heaveAxis = Input.GetAxisRaw("Heave");
+		pitchAxis = Input.GetAxis("Pitch");
+		rollAxis = Input.GetAxis("Roll");
+		yawAxis = Input.GetAxis("Yaw");
+		surgeAxis = Input.GetAxis("Surge");
+		swayAxis = Input.GetAxis("Sway");
+		heaveAxis = Input.GetAxis("Heave");
 
 		//grab button input
 		//TODO: Fix this
-		if (Input.GetButton("SAS"))
+		if (Input.GetButtonDown("SAS"))
 			keySAS = !keySAS;
-		if (Input.GetButton("ABS"))
+		if (Input.GetButtonDown("ABS"))
 			keyABS = !keyABS;
 	}
 

@@ -6,6 +6,8 @@ public class FlightPathVector : MonoBehaviour {
 	private Transform trans;
 	private Vector3 relTranVel;
 
+	[SerializeField] Transform pointer;
+
 	// Use this for initialization
 	void Start () {
 		rb = GetComponent<Rigidbody>();
@@ -20,8 +22,14 @@ public class FlightPathVector : MonoBehaviour {
 		//debug output in BSG format
 		/*
 		Debug.Log("Bearing: " + String.Format("{0,3}", CalcBearing()) +
-			  ", Carom: " + String.Format("{0,3}", CalcMark()));
+			", Carom: " + String.Format("{0,3}", CalcMark()));
 		*/
+
+		//change rotation of pointer
+		if(rb.velocity.magnitude != 0.0f)
+			pointer.forward = rb.velocity;
+		else
+			pointer.transform.rotation = trans.transform.rotation;
 	}
 	
 	// Calculate the closest angle in degrees from ship to current horizontal vector
